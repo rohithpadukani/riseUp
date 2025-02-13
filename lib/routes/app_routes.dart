@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:riseup/views/add_habit_page.dart';
 import 'package:riseup/views/add_journal_entry.dart';
+import 'package:riseup/views/edit_journal_entry.dart';
 import 'package:riseup/views/habit_page.dart';
 import 'package:riseup/views/home_page.dart';
 import 'package:riseup/views/journal_page.dart';
@@ -21,6 +22,7 @@ class AppRoutes {
   static const quotes = '/quotes';
   static const addHabit = '/addHabit';
   static const addJournal = '/addJournal';
+  static const editJournal = '/editJournal';
 
   static List<GetPage> pages = [
     GetPage(name: login, page: () => LoginPage()),
@@ -33,5 +35,6 @@ class AppRoutes {
     GetPage(name: quotes, page: () => QuotesPage()),
     GetPage(name: addJournal, page: () => AddJournalPage()),
     //GetPage(name: addHabit, page: () => AddHabitPage()),
+    //GetPage(name: editJournal, page: () => EditJournalEntry()),
   ];
 }
