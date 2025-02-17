@@ -63,19 +63,29 @@ class JournalService {
         .delete();
   }
 
-  //fetch single entry from firestore
-  Future<Map<String, dynamic>> fetchSingleEntry(
-      String userId, String docId) async {
-    DocumentSnapshot doc = await _fireStore
-        .collection('journals')
-        .doc(userId)
-        .collection('entries')
-        .doc(docId)
-        .get();
-    if (doc.exists) {
-      return doc.data() as Map<String, dynamic>;
-    } else {
-      throw Exception('Entry not found');
+  // //fetch single entry from firestore
+  // Future<Map<String, dynamic>> fetchSingleEntry(
+  //     String userId, String docId) async {
+  //   DocumentSnapshot doc = await _fireStore
+  //       .collection('journals')
+  //       .doc(userId)
+  //       .collection('entries')
+  //       .doc(docId)
+  //       .get();
+  //   if (doc.exists) {
+  //     return doc.data() as Map<String, dynamic>;
+  //   } else {
+  //     throw Exception('Entry not found');
+  //   }
+  // }
+
+  //fetch single entry from firestore as object
+  Future<JournalModel?> getEntry(String userId, String docId) async {
+    DocumentSnapshot doc = await _fireStore.collection('journals').doc(userId).collection('entries').doc(docId).get();
+    if(doc.exists){
+      return JournalModel.fromJson((doc.data() as Map<String, dynamic>), docId);
+    }else {
+      return null;
     }
   }
 }

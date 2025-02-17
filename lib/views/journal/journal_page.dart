@@ -66,14 +66,6 @@ class JournalPage extends StatelessWidget {
     }
   }
 
-  String formatDateTime(DateTime dateTime) {
-    return DateFormat('EEEE, MMM d, yyyy').format(dateTime);
-  }
-
-  String dateTimetoTime(DateTime dateTime) {
-    return DateFormat.jm().format(dateTime);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,7 +132,7 @@ class JournalPage extends StatelessWidget {
                                                 width: 10,
                                               ),
                                               Text(
-                                                dateTimetoTime(entry.date),
+                                                DateFormat.jm().format(entry.date),
                                                 style: const TextStyle(
                                                     fontWeight: FontWeight.w700,
                                                     color: Color(0xff009B22),
@@ -220,58 +212,3 @@ class JournalPage extends StatelessWidget {
     );
   }
 }
-
-
-// //remove
-// Column(
-//                             children: [
-//                               Container(
-//                                 width: double.infinity,
-//                                 padding: const EdgeInsets.all(15),
-//                                 decoration: BoxDecoration(
-//                                   color: Colors.grey[300],
-//                                   borderRadius: BorderRadius.circular(20),
-//                                 ),
-//                                 child: Column(
-//                                   crossAxisAlignment: CrossAxisAlignment.start,
-//                                   children: [
-//                                     Text(entry.title),
-//                                     Text(entry.description),
-//                                     Text(
-//                                       formatDateTime(entry.date),
-//                                     ),
-//                                     Text(dateTimetoTime(entry.date)),
-//                                     Row(
-//                                       mainAxisAlignment: MainAxisAlignment.end,
-//                                       children: [
-//                                         IconButton(
-//                                           onPressed: () {
-//                                             Get.to(EditJournalEntry(
-//                                                 docId: entry.docId,
-//                                                 currentTitle: entry.title,
-//                                                 currentDescription:
-//                                                     entry.description));
-//                                           },
-//                                           icon: Icon(Icons.edit),
-//                                         ),
-//                                         SizedBox(
-//                                           width: 20,
-//                                         ),
-//                                         GestureDetector(
-//                                           onTap: () {
-//                                             _journalController
-//                                                 .deleteJournalEntry(
-//                                                     user!.uid, entry.docId);
-//                                           },
-//                                           child: const Icon(Icons.delete),
-//                                         ),
-//                                       ],
-//                                     )
-//                                   ],
-//                                 ),
-//                               ),
-//                               const SizedBox(
-//                                 height: 15,
-//                               ),
-//                             ],
-//                           );

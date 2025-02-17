@@ -14,6 +14,8 @@ class JournalController extends GetxController {
   //fetch user
   User? user = FirebaseAuth.instance.currentUser;
 
+  //JournalModel? journalEntry;
+
   //save journal entry
   Future<void> saveJournalEntry(JournalModel entry) async {
     try {
@@ -58,4 +60,14 @@ class JournalController extends GetxController {
       Get.snackbar('Failed', '$e');
     }
   }
+
+  //get single entry as object
+  Future<JournalModel?> getEntry(String userId, String docId) async {
+    try{
+      return await _journalService.getEntry(userId, docId);
+      
+    }catch(e){
+      throw Exception('Error fetching data');
+    }
+  } 
 }
