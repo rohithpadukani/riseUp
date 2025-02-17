@@ -1,15 +1,15 @@
 import 'package:get/get.dart';
-import 'package:riseup/views/add_habit_page.dart';
-import 'package:riseup/views/add_journal_entry.dart';
-import 'package:riseup/views/edit_journal_entry.dart';
-import 'package:riseup/views/habit_page.dart';
+import 'package:riseup/views/habit/add_habit_page.dart';
+import 'package:riseup/views/journal/add_journal_entry.dart';
+import 'package:riseup/views/journal/edit_journal_entry.dart';
+import 'package:riseup/views/habit/habit_page.dart';
 import 'package:riseup/views/home_page.dart';
-import 'package:riseup/views/journal_page.dart';
+import 'package:riseup/views/journal/journal_page.dart';
 import 'package:riseup/views/main_screen.dart';
-import 'package:riseup/views/login_page.dart';
-import 'package:riseup/views/quote_page.dart';
-import 'package:riseup/views/signup_page.dart';
-import 'package:riseup/views/splash_screen.dart';
+import 'package:riseup/views/authentication/login_page.dart';
+import 'package:riseup/views/quotes/quote_page.dart';
+import 'package:riseup/views/authentication/signup_page.dart';
+import 'package:riseup/views/authentication/splash_screen.dart';
 
 class AppRoutes {
   static const login = '/login';

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class JournalModel {
+  
   String docId;
   String title;
   String description;

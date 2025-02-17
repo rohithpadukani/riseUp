@@ -11,6 +11,7 @@ class AuthController extends GetxController {
 
   // User authentication status
   RxBool isLoading = false.obs;
+  
   //Rx<User?> for real-time user updates
   Rx<User?> firebaseUser = Rx<User?>(null);
 

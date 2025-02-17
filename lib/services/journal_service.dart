@@ -5,9 +5,10 @@ import 'package:riseup/models/journal_model.dart';
 
 class JournalService {
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
+
   User? user = FirebaseAuth.instance.currentUser;
 
-  //save journal entry
+  //save journal entry to firestore
   Future<void> saveJournalEntry(JournalModel entry) async {
     if (user != null) {
       _fireStore
@@ -15,14 +16,12 @@ class JournalService {
           .doc(user!.uid)
           .collection('entries')
           .add(entry.toJson());
-    } else {
-      Get.snackbar('No User', 'No user has logged in!');
     }
   }
 
   //update journal entry
   Future<void> updateJournalEntry(String userId, String docId, String newTitle,
-      String newDescription) async {
+      String newDescription, Timestamp newDate) async {
     if (user != null) {
       _fireStore
           .collection('journals')
@@ -32,14 +31,15 @@ class JournalService {
           .update({
         'title': newTitle,
         'description': newDescription,
-        'date': Timestamp.now(),
+        'date': newDate,
       });
     } else {
       print("No user is logged in.");
     }
   }
 
-  //retrieve journal entries
+  //retrieve all journal entries from firestore
+  //not necessarily used, bacause streams are used to fetch data in journal page
   Future<List<JournalModel>> getAllEntries() async {
     try {
       QuerySnapshot querySnapshot =
@@ -50,6 +50,32 @@ class JournalService {
           .toList();
     } catch (e) {
       throw Exception();
+    }
+  }
+
+  //delete journal from firestore
+  Future<void> deleteJournalEntry(String userId, String docId) async {
+    await FirebaseFirestore.instance
+        .collection('journals')
+        .doc(userId)
+        .collection('entries')
+        .doc(docId)
+        .delete();
+  }
+
+  //fetch single entry from firestore
+  Future<Map<String, dynamic>> fetchSingleEntry(
+      String userId, String docId) async {
+    DocumentSnapshot doc = await _fireStore
+        .collection('journals')
+        .doc(userId)
+        .collection('entries')
+        .doc(docId)
+        .get();
+    if (doc.exists) {
+      return doc.data() as Map<String, dynamic>;
+    } else {
+      throw Exception('Entry not found');
     }
   }
 }
