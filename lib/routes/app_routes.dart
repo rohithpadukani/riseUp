@@ -34,7 +34,7 @@ class AppRoutes {
     GetPage(name: journal, page: () => JournalPage()),
     GetPage(name: quotes, page: () => QuotesPage()),
     GetPage(name: addJournal, page: () => AddJournalPage()),
-    //GetPage(name: addHabit, page: () => AddHabitPage()),
+    GetPage(name: addHabit, page: () => AddHabitPage()),
     //GetPage(name: editJournal, page: () => EditJournalEntry()),
   ];
 }

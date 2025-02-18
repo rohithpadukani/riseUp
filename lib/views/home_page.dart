@@ -1,93 +1,137 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:riseup/controllers/auth_controller.dart';
 import 'package:riseup/routes/app_routes.dart';
+import 'package:riseup/utils/utils.dart';
 import 'package:riseup/views/habit/habit_page.dart';
 import 'package:riseup/views/journal/journal_page.dart';
 import 'package:riseup/views/quotes/quote_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   HomePage({super.key});
 
-  final AuthController authController = Get.find();
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
 
-  
+class _HomePageState extends State<HomePage> {
+  late ScrollController _scrollController;
+  List<DateTime> dates = []; // List to store dates
+  DateTime currentDate = DateTime.now(); // Current date
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+
+    // Generate the list of dates (previous 30 days to next 30 days)
+    for (int i = -30; i <= 30; i++) {
+      dates.add(currentDate.add(Duration(days: i)));
+    }
+
+    // Scroll to the current date after the layout is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToCurrentDate();
+    });
+  }
+
+  void _scrollToCurrentDate() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+
+      int currentDateIndex = dates.indexWhere((date) =>
+          DateFormat('yyyy-MM-dd').format(date) ==
+          DateFormat('yyyy-MM-dd').format(currentDate));
+
+      if (currentDateIndex != -1) {
+        double itemWidth = 65;
+
+
+        // Width of each date widget
+        double viewportWidth = _scrollController.position.viewportDimension;
+
+        // Calculate the offset to center the current date
+        double offset = (currentDateIndex * itemWidth) -
+            (viewportWidth / 2) +
+            (itemWidth / 2);
+
+        // Ensure the offset is within valid bounds
+        offset = offset.clamp(0.0, _scrollController.position.maxScrollExtent);
+
+        // Scroll to the calculated offset
+        _scrollController.jumpTo(offset);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Home',
+          'Habit Page',
           style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 24,
-              color: Colors.white,
-              fontFamily: 'assets/fonts/Inter-Medium.ttf'),
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        backgroundColor: const Color(0xff009B22),
+        backgroundColor: Utils.primaryGreen,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: const EdgeInsets.all(0),
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color(0xff009B22),
-              ),
-              child: Text(
-                'RiseUp',
-                style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.white,
-                    fontFamily: 'assets/fonts/Inter-Bold.ttf',
-                    fontWeight: FontWeight.w700),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              onTap: () {
-                Get.offAll(HomePage());
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.list),
-              title: const Text('Habits'),
-              onTap: () {
-                Get.to(HabitPage());
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.book),
-              title: const Text('Journal'),
-              onTap: () {
-                Get.to(JournalPage());
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.format_quote),
-              title: const Text('Quotes'),
-              onTap: () {
-                Get.to(QuotesPage());
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () {
-                authController.logout();
-              },
-            ),
-          ],
+      body: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          controller: _scrollController,
+          child: Row(
+            children: dates.map((date) {
+              bool isToday = DateFormat('yyyy-MM-dd').format(date) ==
+                  DateFormat('yyyy-MM-dd').format(currentDate);
+              return GestureDetector(
+                onTap: () {
+                  print(
+                      'Selected Date: ${DateFormat('dd MMM yyyy').format(date)}');
+                },
+                child: Container(
+                  width: 50,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isToday ? Colors.blueAccent : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        DateFormat('EEE').format(date),
+                        style: TextStyle(
+                          color: isToday ? Colors.white : Colors.black,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        DateFormat('d').format(date),
+                        style: TextStyle(
+                            color: isToday ? Colors.white : Colors.black,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         ),
-      ),
-      body: Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

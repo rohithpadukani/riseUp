@@ -198,7 +198,7 @@ class _AddJournalPageState extends State<AddJournalPage> {
               controller: _titleController,
               decoration: const InputDecoration(
                 hintText: 'Title',
-                hintStyle: TextStyle(
+                hintStyle: TextStyle(      
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Color(0xff747171),

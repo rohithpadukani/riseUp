@@ -6,10 +6,7 @@ import 'package:riseup/services/journal_service.dart';
 
 class JournalController extends GetxController {
 
-  final JournalService _journalService = JournalService();
-
-  //get all journal entries to this list
-  //final journalEntries = <JournalModel>[].obs;
+  final JournalService _journalService = JournalService(); 
 
   //fetch user
   User? user = FirebaseAuth.instance.currentUser;
@@ -20,7 +17,6 @@ class JournalController extends GetxController {
   Future<void> saveJournalEntry(JournalModel entry) async {
     try {
       await _journalService.saveJournalEntry(entry);
-      //journalEntries.add(entry);
       Get.back();
       Get.snackbar('Success', 'Journal entry added successfully!');
     } catch (e) {
