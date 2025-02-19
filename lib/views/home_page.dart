@@ -76,110 +76,12 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // //fetch habits
-  // Stream<List<HabitModel>> getHabitsForSelectedDays(DateTime selectedDate) {
-  //   if (user == null) {
-  //     return Stream.value([]);
-  //   }
-
-  //   return _firestore
-  //       .collection('habits')
-  //       .doc(user!.uid)
-  //       .collection('habit')
-  //       .snapshots()
-  //       .map((snapshot) {
-  //     print("Total habits fetched: ${snapshot.docs.length}"); // Debugging line
-
-  //     return snapshot.docs
-  //         .map((doc) {
-  //           var habitData = doc.data();
-  //           print("Habit Data: $habitData"); // Debugging line
-
-  //           var createdAt = habitData['createdAt'] != null
-  //               ? (habitData['createdAt'] as Timestamp).toDate()
-  //               : null;
-
-  //           if (createdAt == null) {
-  //             print("Skipping habit due to missing createdAt");
-  //             return null;
-  //           }
-
-  //           print("Habit created at: $createdAt"); // Debugging line
-
-  //           // Ensure we consider habits created on or before the selected date
-  //           if (createdAt.isAfter(selectedDate)) {
-  //             print("Skipping habit created after selected date");
-  //             return null;
-  //           }
-
-  //           var habit = HabitModel.fromJson(doc.data(), doc.id);
-  //           bool repeatOnSelectedDays =
-  //               habit.days.contains(DateFormat('EEEE').format(selectedDate));
-
-  //           print(
-  //               "Does habit repeat on ${DateFormat('EEEE').format(selectedDate)}? $repeatOnSelectedDays");
-
-  //           return repeatOnSelectedDays ? habit : null;
-  //         })
-  //         .whereType<HabitModel>()
-  //         .toList();
-  //   });
-  // }
-
   //select dates
   bool isSelected(DateTime date) {
     return (_selectedDate.year == date.year &&
         _selectedDate.month == date.month &&
         _selectedDate.day == date.day);
   }
-
-  //toggle completion
-  // Future<void> toggleHabitCompletion(HabitModel habit, bool newValue) async {
-  //   String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
-
-  //   try {
-  //     DocumentSnapshot habitSnapshot = await _firestore
-  //         .collection('habits')
-  //         .doc(user!.uid)
-  //         .collection('habit')
-  //         .doc(habit.id)
-  //         .get();
-
-  //     if (!habitSnapshot.exists) {
-  //       print("Habit document not found!");
-  //       return;
-  //     }
-
-  //     List<String> updatedCompletedDates =
-  //         List<String>.from(habitSnapshot['completedDates'] ?? []);
-
-  //     if (newValue) {
-  //       if (!updatedCompletedDates.contains(formattedDate)) {
-  //         updatedCompletedDates.add(formattedDate);
-  //       }
-  //     } else {
-  //       print("Removing $formattedDate from completedDates...");
-  //       updatedCompletedDates = updatedCompletedDates
-  //           .where((date) => date != formattedDate)
-  //           .toList();
-  //     }
-
-  //     await _firestore
-  //         .collection('habits')
-  //         .doc(user!.uid)
-  //         .collection('habit')
-  //         .doc(habit.id)
-  //         .update({'completedDates': updatedCompletedDates});
-
-  //     print("Updated completedDates: $updatedCompletedDates");
-
-  //     setState(() {
-  //       habit.completedDates = updatedCompletedDates;
-  //     });
-  //   } catch (e) {
-  //     print("Error updating habit: $e");
-  //   }
-  // }
 
   @override
   void dispose() {
@@ -258,7 +160,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(
-              height: 20,
+              height: 30,
             ),
             const Text(
               'Habits',
@@ -280,49 +182,80 @@ class _HomePageState extends State<HomePage> {
                     itemCount: habits.length,
                     itemBuilder: (context, index) {
                       var habit = habits[index];
-
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      return Column(
                         children: [
-                          Text(habit.name),
-                          // 🔹 Listen to Firestore updates for this habit
-                          StreamBuilder<DocumentSnapshot>(
-                            stream: _habitService.getHabitCompletionStream(
-                              user!.uid,
-                              habit.id,
-                              DateFormat('yyyy-MM-dd').format(_selectedDate),
-                            ),
-                            builder: (context, completionSnapshot) {
-                              if (completionSnapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const CircularProgressIndicator();
-                              }
-
-                              // Get the completion status (default to false if no data)
-                              bool isCompleted =
-                                  completionSnapshot.data?.exists == true
-                                      ? (completionSnapshot
-                                              .data!['completed'] ??
-                                          false)
-                                      : false;
-
-                              return Checkbox(
-                                value: isCompleted,
-                                onChanged: (bool? value) async {
-                                  if (value != null) {
-                                    await _habitService.toggleHabitCompletion(
-                                      user!.uid,
-                                      habit.id,
-                                      DateFormat('yyyy-MM-dd')
-                                          .format(_selectedDate),
-                                      value,
-                                    );
-                                    setState(() {}); // 🔹 Force UI refresh
-                                  }
-                                },
-                              );
-                            },
+                          const SizedBox(
+                            height: 10,
                           ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                habit.name[0].toUpperCase() +
+                                    habit.name.substring(1),
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                              // 🔹 Listen to Firestore updates for this habit
+                              StreamBuilder<DocumentSnapshot>(
+                                stream: _habitService.getHabitCompletionStream(
+                                  user!.uid,
+                                  habit.id,
+                                  DateFormat('yyyy-MM-dd')
+                                      .format(_selectedDate),
+                                ),
+                                builder: (context, completionSnapshot) {
+                                  if (completionSnapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const SizedBox();
+                                  }
+
+                                  // Get the completion status (default to false if no data)
+                                  bool isCompleted =
+                                      completionSnapshot.data?.exists == true
+                                          ? (completionSnapshot
+                                                  .data!['completed'] ??
+                                              false)
+                                          : false;
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      _habitService.toggleHabitCompletion(
+                                        user!.uid,
+                                        habit.id,
+                                        DateFormat('yyyy-MM-dd')
+                                            .format(_selectedDate),
+                                        !isCompleted, // Toggle value
+                                      );
+                                    },
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(
+                                          milliseconds:
+                                              300), // Smooth animation
+                                      transitionBuilder: (child, animation) {
+                                        return ScaleTransition(
+                                            scale: animation, child: child);
+                                      },
+                                      child: Icon(
+                                        isCompleted
+                                            ? Icons.check_circle
+                                            : Icons.radio_button_unchecked,
+                                        key: ValueKey(
+                                            isCompleted), // Helps prevent flickering
+                                        color: isCompleted
+                                            ? Colors.green
+                                            : Colors.grey,
+                                        size: 28,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          const Divider(),
                         ],
                       );
                     },
