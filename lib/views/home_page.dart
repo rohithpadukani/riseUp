@@ -1,12 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:riseup/controllers/auth_controller.dart';
+import 'package:riseup/models/habit_model.dart';
 import 'package:riseup/routes/app_routes.dart';
+import 'package:riseup/services/habit_service.dart';
 import 'package:riseup/utils/utils.dart';
-import 'package:riseup/views/habit/habit_page.dart';
-import 'package:riseup/views/journal/journal_page.dart';
-import 'package:riseup/views/quotes/quote_page.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({super.key});
@@ -16,21 +16,33 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final User? user = FirebaseAuth.instance.currentUser;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late ScrollController _scrollController;
   List<DateTime> dates = []; // List to store dates
   DateTime currentDate = DateTime.now(); // Current date
+  DateTime _selectedDate = DateTime.now();
+  final HabitService _habitService = HabitService();
+  bool isCompleted = false;
+
+  final CollectionReference habitsRef =
+      FirebaseFirestore.instance.collection('habits');
+
+  // Function to toggle the checkbox state
+  void toggleCheckbox(String habitId, bool currentValue) async {
+    await habitsRef.doc(habitId).update({'isChecked': !currentValue});
+  }
+
+  List<bool> isCheckedList = [];
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-
-    // Generate the list of dates (previous 30 days to next 30 days)
     for (int i = -30; i <= 30; i++) {
       dates.add(currentDate.add(Duration(days: i)));
     }
-
-    // Scroll to the current date after the layout is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentDate();
     });
@@ -46,7 +58,6 @@ class _HomePageState extends State<HomePage> {
 
       if (currentDateIndex != -1) {
         double itemWidth = 65;
-
 
         // Width of each date widget
         double viewportWidth = _scrollController.position.viewportDimension;
@@ -65,6 +76,111 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // //fetch habits
+  // Stream<List<HabitModel>> getHabitsForSelectedDays(DateTime selectedDate) {
+  //   if (user == null) {
+  //     return Stream.value([]);
+  //   }
+
+  //   return _firestore
+  //       .collection('habits')
+  //       .doc(user!.uid)
+  //       .collection('habit')
+  //       .snapshots()
+  //       .map((snapshot) {
+  //     print("Total habits fetched: ${snapshot.docs.length}"); // Debugging line
+
+  //     return snapshot.docs
+  //         .map((doc) {
+  //           var habitData = doc.data();
+  //           print("Habit Data: $habitData"); // Debugging line
+
+  //           var createdAt = habitData['createdAt'] != null
+  //               ? (habitData['createdAt'] as Timestamp).toDate()
+  //               : null;
+
+  //           if (createdAt == null) {
+  //             print("Skipping habit due to missing createdAt");
+  //             return null;
+  //           }
+
+  //           print("Habit created at: $createdAt"); // Debugging line
+
+  //           // Ensure we consider habits created on or before the selected date
+  //           if (createdAt.isAfter(selectedDate)) {
+  //             print("Skipping habit created after selected date");
+  //             return null;
+  //           }
+
+  //           var habit = HabitModel.fromJson(doc.data(), doc.id);
+  //           bool repeatOnSelectedDays =
+  //               habit.days.contains(DateFormat('EEEE').format(selectedDate));
+
+  //           print(
+  //               "Does habit repeat on ${DateFormat('EEEE').format(selectedDate)}? $repeatOnSelectedDays");
+
+  //           return repeatOnSelectedDays ? habit : null;
+  //         })
+  //         .whereType<HabitModel>()
+  //         .toList();
+  //   });
+  // }
+
+  //select dates
+  bool isSelected(DateTime date) {
+    return (_selectedDate.year == date.year &&
+        _selectedDate.month == date.month &&
+        _selectedDate.day == date.day);
+  }
+
+  //toggle completion
+  // Future<void> toggleHabitCompletion(HabitModel habit, bool newValue) async {
+  //   String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
+
+  //   try {
+  //     DocumentSnapshot habitSnapshot = await _firestore
+  //         .collection('habits')
+  //         .doc(user!.uid)
+  //         .collection('habit')
+  //         .doc(habit.id)
+  //         .get();
+
+  //     if (!habitSnapshot.exists) {
+  //       print("Habit document not found!");
+  //       return;
+  //     }
+
+  //     List<String> updatedCompletedDates =
+  //         List<String>.from(habitSnapshot['completedDates'] ?? []);
+
+  //     if (newValue) {
+  //       if (!updatedCompletedDates.contains(formattedDate)) {
+  //         updatedCompletedDates.add(formattedDate);
+  //       }
+  //     } else {
+  //       print("Removing $formattedDate from completedDates...");
+  //       updatedCompletedDates = updatedCompletedDates
+  //           .where((date) => date != formattedDate)
+  //           .toList();
+  //     }
+
+  //     await _firestore
+  //         .collection('habits')
+  //         .doc(user!.uid)
+  //         .collection('habit')
+  //         .doc(habit.id)
+  //         .update({'completedDates': updatedCompletedDates});
+
+  //     print("Updated completedDates: $updatedCompletedDates");
+
+  //     setState(() {
+  //       habit.completedDates = updatedCompletedDates;
+  //     });
+  //   } catch (e) {
+  //     print("Error updating habit: $e");
+  //   }
+  // }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -76,7 +192,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Habit Page',
+          'Home Page',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,
@@ -86,53 +202,138 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(15.0),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          controller: _scrollController,
-          child: Row(
-            children: dates.map((date) {
-              bool isToday = DateFormat('yyyy-MM-dd').format(date) ==
-                  DateFormat('yyyy-MM-dd').format(currentDate);
-              return GestureDetector(
-                onTap: () {
-                  print(
-                      'Selected Date: ${DateFormat('dd MMM yyyy').format(date)}');
-                },
-                child: Container(
-                  width: 50,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isToday ? Colors.blueAccent : Colors.grey[300],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        DateFormat('EEE').format(date),
-                        style: TextStyle(
-                          color: isToday ? Colors.white : Colors.black,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            //date list horizontal
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              controller: _scrollController,
+              child: Row(
+                children: dates.map((date) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedDate = date;
+                      });
+                    },
+                    child: Container(
+                      width: 50,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isSelected(date)
+                            ? Utils.primaryGreen
+                            : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      Text(
-                        DateFormat('d').format(date),
-                        style: TextStyle(
-                            color: isToday ? Colors.white : Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            DateFormat('EEE').format(date),
+                            style: TextStyle(
+                              color: isSelected(date)
+                                  ? Colors.white
+                                  : Colors.black,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('d').format(date),
+                            style: TextStyle(
+                                color: isSelected(date)
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            const Text(
+              'Habits',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            StreamBuilder<List<HabitModel>>(
+              stream:
+                  _habitService.getSelectedDayHabits(_selectedDate, user!.uid),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const CircularProgressIndicator();
+                }
+                var habits = snapshot.data!;
+                return Expanded(
+                  child: ListView.builder(
+                    itemCount: habits.length,
+                    itemBuilder: (context, index) {
+                      var habit = habits[index];
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(habit.name),
+                          // 🔹 Listen to Firestore updates for this habit
+                          StreamBuilder<DocumentSnapshot>(
+                            stream: _habitService.getHabitCompletionStream(
+                              user!.uid,
+                              habit.id,
+                              DateFormat('yyyy-MM-dd').format(_selectedDate),
+                            ),
+                            builder: (context, completionSnapshot) {
+                              if (completionSnapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const CircularProgressIndicator();
+                              }
+
+                              // Get the completion status (default to false if no data)
+                              bool isCompleted =
+                                  completionSnapshot.data?.exists == true
+                                      ? (completionSnapshot
+                                              .data!['completed'] ??
+                                          false)
+                                      : false;
+
+                              return Checkbox(
+                                value: isCompleted,
+                                onChanged: (bool? value) async {
+                                  if (value != null) {
+                                    await _habitService.toggleHabitCompletion(
+                                      user!.uid,
+                                      habit.id,
+                                      DateFormat('yyyy-MM-dd')
+                                          .format(_selectedDate),
+                                      value,
+                                    );
+                                    setState(() {}); // 🔹 Force UI refresh
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                ),
-              );
-            }).toList(),
-          ),
+                );
+              },
+            )
+          ],
         ),
       ),
+      //floating action button
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showModalBottomSheet(
@@ -159,7 +360,6 @@ class _HomePageState extends State<HomePage> {
                           onPressed: () {
                             Get.back();
                             Get.toNamed(AppRoutes.addJournal);
-
                           },
                           child: const Text(
                             'Journal',

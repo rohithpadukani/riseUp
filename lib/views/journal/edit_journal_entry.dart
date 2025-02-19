@@ -66,7 +66,7 @@ class _EditJournalEntryState extends State<EditJournalEntry> {
     );
     if (pickedTime != null) {
       setState(() {
-        DateTime oldDay = (journalEntry!.date as Timestamp).toDate();
+        DateTime oldDay = journalEntry!.date;
         selectedDate = DateTime(oldDay.year, oldDay.month, oldDay.day,
             pickedTime.hour, pickedTime.minute);
         journalEntry!.date = selectedDate;

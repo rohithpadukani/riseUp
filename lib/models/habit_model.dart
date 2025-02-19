@@ -8,50 +8,61 @@ class HabitModel {
   final TimeOfDay reminderTime;
   int streak;
   int score;
+  DateTime? createdAt;
+  bool completed;
 
-  HabitModel(
-      {required this.id,
-      required this.name,
-      required this.days,
-      required this.reminderTime,
-      required this.streak,
-      required this.score});
+  HabitModel({
+    required this.id,
+    required this.name,
+    required this.days,
+    required this.reminderTime,
+    required this.streak,
+    required this.score,
+    this.createdAt,
+    this.completed = false,//default false
+  });
 
-  //convert to json
+  // Convert to JSON for Firestore
   Map<String, dynamic> toJson() {
-
     final now = DateTime.now();
-
     final reminderDateTime = DateTime(
       now.year,
       now.month,
       now.day,
       reminderTime.hour,
-      reminderTime.minute
+      reminderTime.minute,
     );
+
     return {
       'name': name,
       'days': days,
       'reminderTime': Timestamp.fromDate(reminderDateTime),
       'streak': streak,
       'score': score,
+      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 
-  //convert timestamp to timeofday
-  static timestampToTimeofday(Timestamp timestamp){
+  // Convert Firestore Timestamp to TimeOfDay
+  static TimeOfDay timestampToTimeOfDay(Timestamp timestamp) {
     DateTime dateTime = timestamp.toDate();
     return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
   }
 
-  //convert back to model
-  factory HabitModel.fromJson(Map<String, dynamic> json, String id) {
+  // Convert JSON to HabitModel
+  factory HabitModel.fromJson(Map<String, dynamic> json, String id, bool completed){
     return HabitModel(
-        id: id,
-        name: json['name'],
-        days: List<String>.from(json['days']),
-        reminderTime: HabitModel.timestampToTimeofday(json['reminderTime']),
-        streak: json['streak'],
-        score: json['score']);
+      id: id,
+      name: json['name'] ?? 'Unknown Habit',
+      days: List<String>.from(json['days'] ?? []),
+      reminderTime:
+          timestampToTimeOfDay(json['reminderTime'] ?? Timestamp.now()),
+      streak: json['streak'] ?? 0,
+      score: json['score'] ?? 0,
+      createdAt: json['createdAt'] != null
+          ? (json['createdAt'] as Timestamp).toDate()
+          : null,
+          completed: completed,
+    );
   }
 }

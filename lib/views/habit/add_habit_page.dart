@@ -15,6 +15,7 @@ class _AddHabitPageState extends State<AddHabitPage> {
   final HabitController _habitController = HabitController();
   List<String> _selectedDays = [];
   TimeOfDay? _selectedTime;
+  //List<bool> isChecked = [];
   int streak = 0;
   int score = 0;
 
@@ -57,6 +58,7 @@ class _AddHabitPageState extends State<AddHabitPage> {
       name: _habitNameController.text,
       days: _selectedDays,
       reminderTime : _selectedTime!,
+      //isChecked: isChecked,
       streak: streak,
       score: score,
     );
@@ -67,7 +69,7 @@ class _AddHabitPageState extends State<AddHabitPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Add New Habit"),
+        title: const Text("Add New Habit"),
       ),
       body: SingleChildScrollView(
         child: Padding(
