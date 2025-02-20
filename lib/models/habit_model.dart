@@ -5,7 +5,7 @@ class HabitModel {
   final String id;
   final String name;
   final List<String> days;
-  final TimeOfDay reminderTime;
+  TimeOfDay? reminderTime;
   int streak;
   int score;
   DateTime? createdAt;
@@ -15,7 +15,7 @@ class HabitModel {
     required this.id,
     required this.name,
     required this.days,
-    required this.reminderTime,
+    this.reminderTime,
     required this.streak,
     required this.score,
     this.createdAt,
@@ -23,25 +23,20 @@ class HabitModel {
   });
 
   // Convert to JSON for Firestore
-  Map<String, dynamic> toJson() {
-    final now = DateTime.now();
-    final reminderDateTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      reminderTime.hour,
-      reminderTime.minute,
-    );
+ Map<String, dynamic> toJson() {
+  final now = DateTime.now();
 
-    return {
-      'name': name,
-      'days': days,
-      'reminderTime': Timestamp.fromDate(reminderDateTime),
-      'streak': streak,
-      'score': score,
-      'createdAt': FieldValue.serverTimestamp(),
-    };
-  }
+  return {
+    'name': name,
+    'days': days,
+    'reminderTime': reminderTime != null 
+        ? Timestamp.fromDate(DateTime(now.year, now.month, now.day, reminderTime!.hour, reminderTime!.minute))
+        : null, // Properly handle null
+    'streak': streak,
+    'score': score,
+    'createdAt': FieldValue.serverTimestamp(),
+  };
+}
 
   // Convert Firestore Timestamp to TimeOfDay
   static TimeOfDay timestampToTimeOfDay(Timestamp timestamp) {
@@ -56,13 +51,34 @@ class HabitModel {
       name: json['name'] ?? 'Unknown Habit',
       days: List<String>.from(json['days'] ?? []),
       reminderTime:
-          timestampToTimeOfDay(json['reminderTime'] ?? Timestamp.now()),
+          json['reminderTime'] != null 
+        ? timestampToTimeOfDay(json['reminderTime']) 
+        : null,
       streak: json['streak'] ?? 0,
       score: json['score'] ?? 0,
       createdAt: json['createdAt'] != null
           ? (json['createdAt'] as Timestamp).toDate()
           : null,
           completed: completed,
+    );
+  }
+
+   // Convert JSON to HabitModel
+  factory HabitModel.fromJsonForEdit(Map<String, dynamic> json, String id){
+    return HabitModel(
+      id: id,
+      name: json['name'] ?? 'Unknown Habit',
+      days: List<String>.from(json['days'] ?? []),
+      reminderTime:
+          json['reminderTime'] != null 
+        ? timestampToTimeOfDay(json['reminderTime']) 
+        : null,
+      streak: json['streak'] ?? 0,
+      score: json['score'] ?? 0,
+      createdAt: json['createdAt'] != null
+          ? (json['createdAt'] as Timestamp).toDate()
+
+          : null,
     );
   }
 }

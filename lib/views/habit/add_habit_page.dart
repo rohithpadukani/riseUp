@@ -57,8 +57,8 @@ class _AddHabitPageState extends State<AddHabitPage> {
       id: '',
       name: _habitNameController.text,
       days: _selectedDays,
-      reminderTime : _selectedTime!,
-      //isChecked: isChecked,
+      reminderTime : _selectedTime,
+      
       streak: streak,
       score: score,
     );

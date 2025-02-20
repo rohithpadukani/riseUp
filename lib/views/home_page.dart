@@ -182,6 +182,8 @@ class _HomePageState extends State<HomePage> {
                     itemCount: habits.length,
                     itemBuilder: (context, index) {
                       var habit = habits[index];
+                      // ✅ Check if the selected date is in the future
+                      bool isFutureDate = _selectedDate.isAfter(DateTime.now());
                       return Column(
                         children: [
                           const SizedBox(
@@ -191,8 +193,10 @@ class _HomePageState extends State<HomePage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                habit.name[0].toUpperCase() +
-                                    habit.name.substring(1),
+                                habit.name.isNotEmpty
+                                    ? habit.name[0].toUpperCase() +
+                                        habit.name.substring(1)
+                                    : "Unnamed Habit",
                                 style: const TextStyle(fontSize: 18),
                               ),
                               // 🔹 Listen to Firestore updates for this habit
@@ -218,15 +222,17 @@ class _HomePageState extends State<HomePage> {
                                           : false;
 
                                   return GestureDetector(
-                                    onTap: () {
-                                      _habitService.toggleHabitCompletion(
-                                        user!.uid,
-                                        habit.id,
-                                        DateFormat('yyyy-MM-dd')
-                                            .format(_selectedDate),
-                                        !isCompleted, // Toggle value
-                                      );
-                                    },
+                                    onTap: isFutureDate
+                                        ? null
+                                        : () {
+                                            _habitService.toggleHabitCompletion(
+                                              user!.uid,
+                                              habit.id,
+                                              DateFormat('yyyy-MM-dd')
+                                                  .format(_selectedDate),
+                                              !isCompleted, // Toggle value
+                                            );
+                                          },
                                     child: AnimatedSwitcher(
                                       duration: const Duration(
                                           milliseconds:
@@ -236,9 +242,12 @@ class _HomePageState extends State<HomePage> {
                                             scale: animation, child: child);
                                       },
                                       child: Icon(
-                                        isCompleted
-                                            ? Icons.check_circle
-                                            : Icons.radio_button_unchecked,
+                                        isFutureDate
+                                            ? Icons
+                                                .lock // 🔒 Show lock icon for future dates
+                                            : isCompleted
+                                                ? Icons.check_circle
+                                                : Icons.radio_button_unchecked,
                                         key: ValueKey(
                                             isCompleted), // Helps prevent flickering
                                         color: isCompleted

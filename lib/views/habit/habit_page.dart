@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:riseup/models/habit_model.dart';
+import 'package:riseup/routes/app_routes.dart';
 import 'package:riseup/services/habit_service.dart';
 import 'package:riseup/utils/utils.dart';
+import 'package:riseup/views/habit/edit_habit_page.dart';
+import 'package:riseup/views/habit/habit_analytics_page.dart';
 
 class HabitPage extends StatefulWidget {
-
   HabitPage({super.key});
 
   @override
@@ -22,24 +25,40 @@ class _HabitPageState extends State<HabitPage> {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Stream<List<HabitModel>> getAllHabits() {
-  //   if (user != null) {
-  //     return _firestore
-  //         .collection('habits')
-  //         .doc(user!.uid)
-  //         .collection('habit')
-  //         .snapshots()
-  //         .map((snapshot) {
-  //       return snapshot.docs.map((doc) {
-  //         var habit = HabitModel.fromJson(doc.data(), doc.id);
-  //         print("Habit data: ${habit.name}, ${habit.days}, ${habit.reminderTime}");
-  //         return habit;
-  //       }).toList();
-  //     });
-  //   } else {
-  //     return Stream.value([]);
-  //   }
-  // }
+  //dialogue box
+  Future<void> deleteDialogueBox(
+      BuildContext context, String userId, String docId) async {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Confirm Delete?'),
+            content: const Text(
+              'Are you sure you want to delete?',
+            ),
+            actions: <Widget>[
+              TextButton(
+                style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge),
+                child: const Text('Delete'),
+                onPressed: () {
+                  _habitService.deleteJournalEntry(user!.uid, docId);
+
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge),
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,21 +88,132 @@ class _HabitPageState extends State<HabitPage> {
                 itemCount: habits.length,
                 itemBuilder: (context, index) {
                   HabitModel habit = habits[index];
+
+                  TimeOfDay? reminderTime;
+                  DateTime? dateTime;
+
+// Check if reminderTime is null or a Timestamp
+                  if (habit.reminderTime != null) {
+                    if (habit.reminderTime is Timestamp) {
+                      // Convert Timestamp to DateTime
+                      DateTime timestampDate =
+                          (habit.reminderTime as Timestamp).toDate();
+                      reminderTime = TimeOfDay(
+                          hour: timestampDate.hour,
+                          minute: timestampDate.minute);
+                    } else if (habit.reminderTime is TimeOfDay) {
+                      // Directly use TimeOfDay
+                      reminderTime = habit.reminderTime as TimeOfDay;
+                    }
+                  }
+
+// Convert TimeOfDay to DateTime
+                  if (reminderTime != null) {
+                    DateTime now = DateTime.now();
+                    dateTime = DateTime(now.year, now.month, now.day,
+                        reminderTime.hour, reminderTime.minute);
+                  }
+
+// Format or set default text
+                  String reminderTimeForText = dateTime != null
+                      ? DateFormat('h:mm a')
+                          .format(dateTime) // Format as HH:mm AM/PM
+                      : 'Not Set';
+
                   return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(habit.name),
-                      Text(habit.days.join(', ')),
-                      Text(
-                        DateFormat('hh:mm a').format(DateTime(
-                            2021,
-                            1,
-                            1,
-                            habit.reminderTime.hour,
-                            habit.reminderTime.minute)),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffF4F4F4),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  habit.name.isNotEmpty
+                                      ? habit.name[0].toUpperCase() +
+                                          habit.name.substring(1)
+                                      : "Unnamed Habit",
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color: Color(0xff626262),
+                                      ),
+                                      onPressed: () {
+                                        Get.to(EditHabitPage(docId: habit.id));
+                                      },
+                                    ),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.bar_chart_rounded,
+                                          color: Color(0xff626262)),
+                                      onPressed: () async {
+                                        HabitModel hab = await _habitService
+                                            .getHabitForAnalytics(
+                                                user!.uid, habit.id);
+                                        Get.to(HabitAnalyticsPage(
+                                          habit: hab,
+                                        ));
+                                      },
+                                    ),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Color(0xff626262),
+                                      ),
+                                      onPressed: () {
+                                        deleteDialogueBox(
+                                            context, user!.uid, habit.id);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            //const SizedBox(height: 10,),
+
+                            Row(
+                              children: [
+                                Text(
+                                  'Streak: ${habit.streak.toString()}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text('Score: ${habit.score.toString()}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                              ],
+                            ),
+                            Text('Reminder: $reminderTimeForText'),
+                          ],
+                        ),
                       ),
-                      Text(habit.streak.toString()),
-                      Text(habit.score.toString()),
+                      const SizedBox(
+                        height: 10,
+                      ),
                     ],
                   );
                 });
