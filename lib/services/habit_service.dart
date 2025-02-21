@@ -117,6 +117,8 @@ class HabitService {
 
     if (isCompleted) {
       try {
+        await logRef.set({'completed': true}, SetOptions(merge: true));
+
         int streak = await calculateStreak(userId, habitId);
         int validCompletedDays = await countValidCompletedDays(userId, habitId);
         int score = _calculateScore(streak, validCompletedDays);
@@ -125,8 +127,6 @@ class HabitService {
           'streak': streak,
           'score': score,
         });
-
-        await logRef.set({'completed': true}, SetOptions(merge: true));
 
         print(
             "✅ Habit completed - $habitId on $selectedDate. Streak: $streak, Valid Completed Days: $validCompletedDays, Score: $score");
@@ -137,20 +137,11 @@ class HabitService {
       try {
         await logRef.delete();
 
-        // 🔥 Calculate streak again
         int updatedStreak = await calculateStreak(userId, habitId);
         int updatedValidCompletedDays =
             await countValidCompletedDays(userId, habitId);
         int updatedScore =
             _calculateScore(updatedStreak, updatedValidCompletedDays);
-
-        // ✅ Explicitly set streak to 0 if there are no completed logs
-        if (updatedStreak == 1) {
-          DocumentSnapshot lastLog = await logRef.get();
-          if (!lastLog.exists) {
-            updatedStreak = 0;
-          }
-        }
 
         await habitRef.update({
           'streak': updatedStreak,
@@ -158,7 +149,7 @@ class HabitService {
         });
 
         print(
-            "❌ Habit unchecked - $habitId on $selectedDate. Streak reset to $updatedStreak, Valid Completed Days: $updatedValidCompletedDays.");
+            "❌ Habit unchecked - $habitId on $selectedDate. Updated Streak: $updatedStreak.");
       } catch (e) {
         print("🚨 Error deleting habit log: $e");
       }
@@ -179,41 +170,55 @@ class HabitService {
     Map<String, dynamic>? habitData = habitDoc.data() as Map<String, dynamic>?;
     List<dynamic> selectedDays = habitData?['days'] ?? [];
 
-    int streak = 0;
     DateTime today = DateTime.now();
     DateTime currentDate = today;
 
-    bool foundFirstCompletion = false; // ✅ Track first completion
+    // 🟢 Fetch all logs at once
+    QuerySnapshot logsSnapshot = await _firestore
+        .collection('habits')
+        .doc(userId)
+        .collection('habit')
+        .doc(habitId)
+        .collection('logs')
+        .get();
+
+    Map<String, bool> completedLogs = {};
+    for (var doc in logsSnapshot.docs) {
+      completedLogs[doc.id] =
+          (doc.data() as Map<String, dynamic>)['completed'] ?? false;
+    }
+
+    print("✅ Fetched logs: $completedLogs"); // Debugging
+
+    int streak = 0;
+    bool foundFirstCompletion = false;
+    bool hasTodayCompleted =
+        completedLogs[DateFormat('yyyy-MM-dd').format(today)] ?? false;
 
     while (true) {
       String dayName = DateFormat('EEEE').format(currentDate);
-
-      // 🔥 Ignore days that are not part of the habit schedule
       if (!selectedDays.contains(dayName)) {
         currentDate = currentDate.subtract(Duration(days: 1));
         continue;
       }
 
       String formattedDate = DateFormat('yyyy-MM-dd').format(currentDate);
-      DocumentSnapshot logSnapshot = await _firestore
-          .collection('habits')
-          .doc(userId)
-          .collection('habit')
-          .doc(habitId)
-          .collection('logs')
-          .doc(formattedDate)
-          .get();
+      bool isCompleted = completedLogs[formattedDate] ?? false;
 
-      if (logSnapshot.exists && logSnapshot['completed'] == true) {
+      if (isCompleted) {
         streak++;
-        foundFirstCompletion = true; // ✅ Found at least one completion
-        currentDate = currentDate.subtract(const Duration(days: 1));
+        foundFirstCompletion = true;
+        currentDate = currentDate.subtract(Duration(days: 1));
       } else {
-        break; // Streak ends
+        // ✅ Ensure today is counted if completed, even if yesterday is unchecked
+        if (foundFirstCompletion && hasTodayCompleted) {
+          return streak;
+        }
+        break;
       }
     }
 
-    return foundFirstCompletion ? streak : 1; // ✅ Ensure streak is at least 1
+    return foundFirstCompletion ? streak : (hasTodayCompleted ? 1 : 0);
   }
 
   // 🔹 Calculate score based on streak
@@ -335,7 +340,7 @@ class HabitService {
   }
 
   //fetch habits for analytics
-  
+
   Future<HabitModel> getHabitForAnalytics(String userId, String habitId) async {
     DocumentSnapshot doc = await _firestore
         .collection('habits')

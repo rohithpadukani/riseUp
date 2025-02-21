@@ -29,12 +29,8 @@ class _HomePageState extends State<HomePage> {
   final CollectionReference habitsRef =
       FirebaseFirestore.instance.collection('habits');
 
-  // Function to toggle the checkbox state
-  void toggleCheckbox(String habitId, bool currentValue) async {
-    await habitsRef.doc(habitId).update({'isChecked': !currentValue});
-  }
-
   List<bool> isCheckedList = [];
+  
 
   @override
   void initState() {
