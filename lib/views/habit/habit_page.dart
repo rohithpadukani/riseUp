@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:riseup/models/habit_model.dart';
-import 'package:riseup/routes/app_routes.dart';
 import 'package:riseup/services/habit_service.dart';
 import 'package:riseup/utils/utils.dart';
 import 'package:riseup/views/habit/edit_habit_page.dart';
@@ -23,8 +22,6 @@ class _HabitPageState extends State<HabitPage> {
   final User? user = FirebaseAuth.instance.currentUser;
   final HabitService _habitService = HabitService();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   //dialogue box
   Future<void> deleteDialogueBox(
       BuildContext context, String userId, String docId) async {
@@ -42,7 +39,7 @@ class _HabitPageState extends State<HabitPage> {
                     textStyle: Theme.of(context).textTheme.labelLarge),
                 child: const Text('Delete'),
                 onPressed: () {
-                  _habitService.deleteJournalEntry(user!.uid, docId);
+                  _habitService.deleteHabit(user!.uid, docId);
 
                   Navigator.of(context).pop();
                 },
@@ -130,7 +127,6 @@ class _HabitPageState extends State<HabitPage> {
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -145,6 +141,7 @@ class _HabitPageState extends State<HabitPage> {
                                       fontWeight: FontWeight.bold),
                                 ),
                                 Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     IconButton(
                                       icon: const Icon(
@@ -154,9 +151,6 @@ class _HabitPageState extends State<HabitPage> {
                                       onPressed: () {
                                         Get.to(EditHabitPage(docId: habit.id));
                                       },
-                                    ),
-                                    const SizedBox(
-                                      width: 10,
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.bar_chart_rounded,
@@ -169,9 +163,6 @@ class _HabitPageState extends State<HabitPage> {
                                           habit: hab,
                                         ));
                                       },
-                                    ),
-                                    const SizedBox(
-                                      width: 10,
                                     ),
                                     IconButton(
                                       icon: const Icon(

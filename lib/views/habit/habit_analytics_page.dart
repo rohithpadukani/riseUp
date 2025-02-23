@@ -72,9 +72,9 @@ class _HabitAnalyticsPageState extends State<HabitAnalyticsPage> {
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Utils.primaryGreen,
-        title: const Text(
-          'Statistics',
-          style: TextStyle(
+        title: Text(
+          widget.habit.name,
+          style: const TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 20,
               color: Colors.white,
@@ -110,7 +110,7 @@ class _HabitAnalyticsPageState extends State<HabitAnalyticsPage> {
               ),
               const SizedBox(height: 30),
               const Divider(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               const Text(
                 "Habit Completion Calendar",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

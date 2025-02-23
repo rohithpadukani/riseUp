@@ -1,12 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:riseup/models/habit_model.dart';
+import 'package:riseup/services/notification_service.dart';
 
 class HabitService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   User? user = FirebaseAuth.instance.currentUser;
+  NotificationService _notificationService = NotificationService();
+
+  DateTime convertTimeOfDayToDateTime(TimeOfDay time) {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, time.hour, time.minute);
+  }
 
   //save habit to firestore
   Future<void> saveHabit(HabitModel habit) async {
@@ -16,6 +24,13 @@ class HabitService {
           .doc(user!.uid)
           .collection('habit')
           .add(habit.toJson());
+    }
+
+    if (habit.reminderTime != null && habit.days.isNotEmpty) {
+      NotificationService.scheduleReminder(
+          habit.id, habit.name, habit.reminderTime!, habit.days);
+    } else {
+      NotificationService.cancelNotification(habit.id, habit.days);
     }
   }
 
@@ -304,15 +319,26 @@ class HabitService {
   }
 
   //delete habit from firestore
-
-  //delete journal from firestore
-  Future<void> deleteJournalEntry(String userId, String docId) async {
-    await FirebaseFirestore.instance
+  Future<void> deleteHabit(String userId, String docId) async {
+    DocumentSnapshot habitDoc = await FirebaseFirestore.instance
         .collection('habits')
         .doc(userId)
         .collection('habit')
         .doc(docId)
-        .delete();
+        .get();
+
+    if (habitDoc.exists) {
+      List<String> days = List<String>.from(habitDoc['days'] ?? []);
+
+      await FirebaseFirestore.instance
+          .collection('habits')
+          .doc(userId)
+          .collection('habit')
+          .doc(docId)
+          .delete();
+
+      await NotificationService.cancelNotification(docId, days);
+    }
   }
 
   //fetch single habit data from firestore as object
@@ -329,6 +355,7 @@ class HabitService {
         doc.data() as Map<String, dynamic>, doc.id);
   }
 
+//update habit
   Future<void> updateHabit(
       String userId, String habitId, HabitModel habit) async {
     await _firestore
@@ -337,6 +364,14 @@ class HabitService {
         .collection('habit')
         .doc(habitId)
         .update(habit.toJson());
+
+    // ✅ Cancel existing notifications before scheduling new ones
+    await NotificationService.cancelNotification(habit.id, habit.days);
+
+    if (habit.reminderTime != null && habit.days.isNotEmpty) {
+      await NotificationService.scheduleReminder(
+          habit.id, habit.name, habit.reminderTime!, habit.days);
+    }
   }
 
   //fetch habits for analytics

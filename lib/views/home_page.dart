@@ -6,10 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:riseup/models/habit_model.dart';
 import 'package:riseup/routes/app_routes.dart';
 import 'package:riseup/services/habit_service.dart';
+import 'package:riseup/services/notification_service.dart';
 import 'package:riseup/utils/utils.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({super.key});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -18,7 +19,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final User? user = FirebaseAuth.instance.currentUser;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late ScrollController _scrollController;
   List<DateTime> dates = []; // List to store dates
   DateTime currentDate = DateTime.now(); // Current date
@@ -30,7 +30,6 @@ class _HomePageState extends State<HomePage> {
       FirebaseFirestore.instance.collection('habits');
 
   List<bool> isCheckedList = [];
-  
 
   @override
   void initState() {
@@ -267,7 +266,10 @@ class _HomePageState extends State<HomePage> {
                   ),
                 );
               },
-            )
+            ),
+            const SizedBox(
+              height: 20,
+            ),
           ],
         ),
       ),

@@ -1,8 +1,6 @@
 import 'package:get/get.dart';
 import 'package:riseup/views/habit/add_habit_page.dart';
-import 'package:riseup/views/habit/edit_habit_page.dart';
 import 'package:riseup/views/journal/add_journal_entry.dart';
-import 'package:riseup/views/journal/edit_journal_entry.dart';
 import 'package:riseup/views/habit/habit_page.dart';
 import 'package:riseup/views/home_page.dart';
 import 'package:riseup/views/journal/journal_page.dart';
@@ -37,6 +35,5 @@ class AppRoutes {
     GetPage(name: quotes, page: () => QuotesPage()),
     GetPage(name: addJournal, page: () => const AddJournalPage()),
     GetPage(name: addHabit, page: () => const AddHabitPage()),
-    //GetPage(name: editHabit, page: () => const EditHabitPage()),
   ];
 }
