@@ -9,7 +9,6 @@ class HabitService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   User? user = FirebaseAuth.instance.currentUser;
-  NotificationService _notificationService = NotificationService();
 
   DateTime convertTimeOfDayToDateTime(TimeOfDay time) {
     final now = DateTime.now();
@@ -25,7 +24,6 @@ class HabitService {
           .collection('habit')
           .add(habit.toJson());
     }
-
     if (habit.reminderTime != null && habit.days.isNotEmpty) {
       NotificationService.scheduleReminder(
           habit.id, habit.name, habit.reminderTime!, habit.days);
@@ -38,7 +36,6 @@ class HabitService {
   Stream<List<HabitModel>> getHabits(String userId) {
     DateTime today = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(today);
-
     return _firestore
         .collection('habits')
         .doc(userId)
@@ -56,11 +53,9 @@ class HabitService {
         bool isCompleted =
             logSnapshot.exists ? (logSnapshot['completed'] ?? false) : false;
 
-        var habit = HabitModel.fromJson(
-            habitData, doc.id, isCompleted); // ✅ Pass completed
+        var habit = HabitModel.fromJson(habitData, doc.id, isCompleted);
         habits.add(habit);
       }
-
       return habits;
     });
   }
@@ -75,36 +70,35 @@ class HabitService {
         .snapshots()
         .asyncMap((snapshot) async {
       List<HabitModel> habits = [];
-      String selectedDayName =
-          DateFormat('EEEE').format(selectedDate); // e.g., "Monday"
+      String selectedDayName = DateFormat('EEEE').format(selectedDate);
 
       for (var doc in snapshot.docs) {
         var habitData = doc.data();
 
-        // ✅ Parse 'createdAt' timestamp safely
+        // Parse 'createdAt' timestamp safely
         DateTime? createdAt = habitData['createdAt'] != null
             ? (habitData['createdAt'] as Timestamp).toDate()
             : null;
 
-        // ✅ Convert 'createdAt' to Date-Only format for proper comparison
+        // Convert 'createdAt' to Date-Only format for proper comparison
         if (createdAt != null) {
           createdAt = DateTime(createdAt.year, createdAt.month, createdAt.day);
         }
         DateTime selectedDateOnly =
             DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
 
-        // ✅ Skip habits created after the selected date
+        // Skip habits created after the selected date
         if (createdAt != null && createdAt.isAfter(selectedDateOnly)) {
           continue;
         }
 
-        // ✅ Check if the habit is meant to be completed on this day
+        // Check if the habit is meant to be completed on this day
         List<dynamic> selectedDays = habitData['days'] ?? [];
         if (!selectedDays.map((e) => e.toString()).contains(selectedDayName)) {
           continue;
         }
 
-        // ✅ Fetch habit completion status from logs subcollection
+        // Fetch habit completion status from logs subcollection
         String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
         var logSnapshot =
             await doc.reference.collection('logs').doc(formattedDate).get();
@@ -171,7 +165,7 @@ class HabitService {
     }
   }
 
-  // 🔹 Calculate streak based on previous day
+  // Calculate streak based on previous day
   Future<int> calculateStreak(String userId, String habitId) async {
     DocumentSnapshot habitDoc = await _firestore
         .collection('habits')
@@ -188,7 +182,7 @@ class HabitService {
     DateTime today = DateTime.now();
     DateTime currentDate = today;
 
-    // 🟢 Fetch all logs at once
+    // Fetch all logs at once
     QuerySnapshot logsSnapshot = await _firestore
         .collection('habits')
         .doc(userId)
@@ -203,8 +197,6 @@ class HabitService {
           (doc.data() as Map<String, dynamic>)['completed'] ?? false;
     }
 
-    print("✅ Fetched logs: $completedLogs"); // Debugging
-
     int streak = 0;
     bool foundFirstCompletion = false;
     bool hasTodayCompleted =
@@ -213,7 +205,7 @@ class HabitService {
     while (true) {
       String dayName = DateFormat('EEEE').format(currentDate);
       if (!selectedDays.contains(dayName)) {
-        currentDate = currentDate.subtract(Duration(days: 1));
+        currentDate = currentDate.subtract(const Duration(days: 1));
         continue;
       }
 
@@ -223,9 +215,9 @@ class HabitService {
       if (isCompleted) {
         streak++;
         foundFirstCompletion = true;
-        currentDate = currentDate.subtract(Duration(days: 1));
+        currentDate = currentDate.subtract(const Duration(days: 1));
       } else {
-        // ✅ Ensure today is counted if completed, even if yesterday is unchecked
+        // Ensure today is counted if completed, even if yesterday is unchecked
         if (foundFirstCompletion && hasTodayCompleted) {
           return streak;
         }
@@ -236,7 +228,7 @@ class HabitService {
     return foundFirstCompletion ? streak : (hasTodayCompleted ? 1 : 0);
   }
 
-  // 🔹 Calculate score based on streak
+  // Calculate score based on streak
   int _calculateScore(int streak, int validCompletedDays) {
     double streakWeight = 0.6;
     double completedDaysWeight = 0.4;
@@ -293,7 +285,7 @@ class HabitService {
     return validCompletedDays;
   }
 
-  // 🔹 Get real-time habit completion status for a specific date
+  // Get real-time habit completion status for a specific date
   Stream<DocumentSnapshot> getHabitCompletionStream(
       String userId, String habitId, String selectedDate) {
     return _firestore
@@ -313,12 +305,7 @@ class HabitService {
     });
   }
 
-  // 🔹 Helper function to format date as yyyy-MM-dd
-  String _getFormattedDate(DateTime date) {
-    return DateFormat('yyyy-MM-dd').format(date);
-  }
-
-  //delete habit from firestore
+  //delete habit from firestore -> moved to controller
   Future<void> deleteHabit(String userId, String docId) async {
     DocumentSnapshot habitDoc = await FirebaseFirestore.instance
         .collection('habits')
@@ -355,7 +342,7 @@ class HabitService {
         doc.data() as Map<String, dynamic>, doc.id);
   }
 
-//update habit
+  //update habit -> moved to controller
   Future<void> updateHabit(
       String userId, String habitId, HabitModel habit) async {
     await _firestore
@@ -365,7 +352,7 @@ class HabitService {
         .doc(habitId)
         .update(habit.toJson());
 
-    // ✅ Cancel existing notifications before scheduling new ones
+    // Cancel existing notifications before scheduling new ones
     await NotificationService.cancelNotification(habit.id, habit.days);
 
     if (habit.reminderTime != null && habit.days.isNotEmpty) {
@@ -375,7 +362,6 @@ class HabitService {
   }
 
   //fetch habits for analytics
-
   Future<HabitModel> getHabitForAnalytics(String userId, String habitId) async {
     DocumentSnapshot doc = await _firestore
         .collection('habits')

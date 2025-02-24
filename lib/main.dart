@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:riseup/controllers/auth_controller.dart';
 import 'package:riseup/routes/app_routes.dart';
 import 'package:riseup/services/notification_service.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -17,8 +16,6 @@ void main() async {
 }
 
 class MyApp extends StatefulWidget {
-
-
   const MyApp({super.key});
 
   @override

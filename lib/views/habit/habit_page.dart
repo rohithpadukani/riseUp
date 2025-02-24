@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:riseup/controllers/habit_controller.dart';
 import 'package:riseup/models/habit_model.dart';
 import 'package:riseup/services/habit_service.dart';
 import 'package:riseup/utils/utils.dart';
@@ -10,7 +11,7 @@ import 'package:riseup/views/habit/edit_habit_page.dart';
 import 'package:riseup/views/habit/habit_analytics_page.dart';
 
 class HabitPage extends StatefulWidget {
-  HabitPage({super.key});
+  const HabitPage({super.key});
 
   @override
   State<HabitPage> createState() => _HabitPageState();
@@ -21,6 +22,7 @@ class _HabitPageState extends State<HabitPage> {
 
   final User? user = FirebaseAuth.instance.currentUser;
   final HabitService _habitService = HabitService();
+  final HabitController _habitController = HabitController();
 
   //dialogue box
   Future<void> deleteDialogueBox(
@@ -39,7 +41,7 @@ class _HabitPageState extends State<HabitPage> {
                     textStyle: Theme.of(context).textTheme.labelLarge),
                 child: const Text('Delete'),
                 onPressed: () {
-                  _habitService.deleteHabit(user!.uid, docId);
+                  _habitController.deleteHabit(user!.uid, docId);
 
                   Navigator.of(context).pop();
                 },
@@ -88,8 +90,6 @@ class _HabitPageState extends State<HabitPage> {
 
                   TimeOfDay? reminderTime;
                   DateTime? dateTime;
-
-// Check if reminderTime is null or a Timestamp
                   if (habit.reminderTime != null) {
                     if (habit.reminderTime is Timestamp) {
                       // Convert Timestamp to DateTime
@@ -103,18 +103,13 @@ class _HabitPageState extends State<HabitPage> {
                       reminderTime = habit.reminderTime as TimeOfDay;
                     }
                   }
-
-// Convert TimeOfDay to DateTime
                   if (reminderTime != null) {
                     DateTime now = DateTime.now();
                     dateTime = DateTime(now.year, now.month, now.day,
                         reminderTime.hour, reminderTime.minute);
                   }
-
-// Format or set default text
                   String reminderTimeForText = dateTime != null
-                      ? DateFormat('h:mm a')
-                          .format(dateTime) // Format as HH:mm AM/PM
+                      ? DateFormat('h:mm a').format(dateTime)
                       : 'Not Set';
 
                   return Column(
@@ -178,8 +173,6 @@ class _HabitPageState extends State<HabitPage> {
                                 ),
                               ],
                             ),
-                            //const SizedBox(height: 10,),
-
                             Row(
                               children: [
                                 Text(

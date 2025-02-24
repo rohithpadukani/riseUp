@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:riseup/controllers/habit_controller.dart';
 import 'package:riseup/models/habit_model.dart';
 import 'package:riseup/services/habit_service.dart';
 
@@ -16,6 +17,7 @@ class EditHabitPage extends StatefulWidget {
 class _EditHabitPageState extends State<EditHabitPage> {
   final TextEditingController _habitNameController = TextEditingController();
   final HabitService _habitService = HabitService();
+  final HabitController _habitController = HabitController();
 
   List<String> _selectedDays = [];
   TimeOfDay? _selectedTime;
@@ -30,26 +32,25 @@ class _EditHabitPageState extends State<EditHabitPage> {
   }
 
   // Load habit details from Firestore
-Future<void> _loadHabit() async {
-  if (user == null) return;
+  Future<void> _loadHabit() async {
+    if (user == null) return;
 
-  HabitModel? habit = await _habitService.getHabit(user!.uid, widget.docId);
+    HabitModel? habit = await _habitService.getHabit(user!.uid, widget.docId);
 
-  if (habit != null) {
-    setState(() {
-      _habitNameController.text = habit.name;
-      _selectedDays = List.from(habit.days); // Ensure previous days are fetched
+    if (habit != null) {
+      setState(() {
+        _habitNameController.text = habit.name;
+        _selectedDays =
+            List.from(habit.days); // Ensure previous days are fetched
 
-      // Convert Firestore Timestamp to TimeOfDay
-      if (habit.reminderTime != null) {
-        _selectedTime = habit.reminderTime;
-        isSwitched = true; // Enable switch if reminder exists
-      }
-    });
+        // Convert Firestore Timestamp to TimeOfDay
+        if (habit.reminderTime != null) {
+          _selectedTime = habit.reminderTime;
+          isSwitched = true; // Enable switch if reminder exists
+        }
+      });
+    }
   }
-}
-
-
 
   void _toggleDaySelection(String day) {
     setState(() {
@@ -74,39 +75,38 @@ Future<void> _loadHabit() async {
   }
 
   // Update habit in Firestore
-Future<void> _updateHabit() async {
-  if (_habitNameController.text.isEmpty) {
-    Get.snackbar("Error", "Habit name cannot be empty");
-    return;
+  Future<void> _updateHabit() async {
+    if (_habitNameController.text.isEmpty) {
+      Get.snackbar("Error", "Habit name cannot be empty");
+      return;
+    }
+
+    if (user == null) {
+      Get.snackbar("Error", "User not logged in");
+      return;
+    }
+
+    // Fetch the existing habit data to retain streak & score
+    HabitModel? existingHabit =
+        await _habitService.getHabit(user!.uid, widget.docId);
+
+    if (existingHabit == null) {
+      Get.snackbar("Error", "Habit not found");
+      return;
+    }
+
+    final habit = HabitModel(
+      id: widget.docId,
+      name: _habitNameController.text,
+      days: _selectedDays, // Replace with new days instead of appending
+      reminderTime: _selectedTime ??
+          existingHabit.reminderTime, // Keep existing if not updated
+      streak: existingHabit.streak, // Retain previous streak value
+      score: existingHabit.score, // Retain previous score value
+    );
+
+    _habitController.updateHabit(user!.uid, widget.docId, habit);
   }
-
-  if (user == null) {
-    Get.snackbar("Error", "User not logged in");
-    return;
-  }
-
-  // Fetch the existing habit data to retain streak & score
-  HabitModel? existingHabit = await _habitService.getHabit(user!.uid, widget.docId);
-
-  if (existingHabit == null) {
-    Get.snackbar("Error", "Habit not found");
-    return;
-  }
-
-  final habit = HabitModel(
-    id: widget.docId,
-    name: _habitNameController.text,
-    days: _selectedDays, // Replace with new days instead of appending
-    reminderTime: _selectedTime ?? existingHabit.reminderTime, // Keep existing if not updated
-    streak: existingHabit.streak, // Retain previous streak value
-    score: existingHabit.score, // Retain previous score value
-  );
-
-  await _habitService.updateHabit(user!.uid, widget.docId, habit);
-  Get.back();
-}
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -149,9 +149,15 @@ Future<void> _updateHabit() async {
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 10,
-                    children: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-                        .map((day) {
+                    children: [
+                      "Monday",
+                      "Tuesday",
+                      "Wednesday",
+                      "Thursday",
+                      "Friday",
+                      "Saturday",
+                      "Sunday"
+                    ].map((day) {
                       bool isSelected = _selectedDays.contains(day);
                       return GestureDetector(
                         onTap: () => _toggleDaySelection(day),
@@ -211,7 +217,10 @@ Future<void> _updateHabit() async {
 
             // Save Button
             GestureDetector(
-              onTap: _updateHabit,
+              onTap: () {
+                _updateHabit();
+                Navigator.pop(context);
+              },
               child: Container(
                 padding: const EdgeInsets.all(20),
                 width: double.infinity,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:riseup/controllers/habit_controller.dart';
 import 'package:riseup/models/habit_model.dart';
 
@@ -57,8 +56,7 @@ class _AddHabitPageState extends State<AddHabitPage> {
       id: '',
       name: _habitNameController.text,
       days: _selectedDays,
-      reminderTime : _selectedTime,
-      
+      reminderTime: _selectedTime,
       streak: streak,
       score: score,
     );
@@ -206,10 +204,12 @@ class _AddHabitPageState extends State<AddHabitPage> {
               const SizedBox(
                 height: 40,
               ),
+              //save button
               GestureDetector(
                 onTap: () {
                   _saveHabit();
-                  Get.back();
+                  Navigator.pop(context);
+                  Navigator.pop(context);
                 },
                 child: Container(
                   padding: const EdgeInsets.all(20),

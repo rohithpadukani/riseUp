@@ -3,10 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:riseup/controllers/auth_controller.dart';
 import 'package:riseup/models/habit_model.dart';
 import 'package:riseup/routes/app_routes.dart';
 import 'package:riseup/services/habit_service.dart';
-import 'package:riseup/services/notification_service.dart';
 import 'package:riseup/utils/utils.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,8 +18,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final User? user = FirebaseAuth.instance.currentUser;
+  final String? email = FirebaseAuth.instance.currentUser!.email;
 
   late ScrollController _scrollController;
+  final AuthController authController = AuthController();
   List<DateTime> dates = []; // List to store dates
   DateTime currentDate = DateTime.now(); // Current date
   DateTime _selectedDate = DateTime.now();
@@ -53,19 +55,11 @@ class _HomePageState extends State<HomePage> {
 
       if (currentDateIndex != -1) {
         double itemWidth = 65;
-
-        // Width of each date widget
         double viewportWidth = _scrollController.position.viewportDimension;
-
-        // Calculate the offset to center the current date
         double offset = (currentDateIndex * itemWidth) -
             (viewportWidth / 2) +
             (itemWidth / 2);
-
-        // Ensure the offset is within valid bounds
         offset = offset.clamp(0.0, _scrollController.position.maxScrollExtent);
-
-        // Scroll to the calculated offset
         _scrollController.jumpTo(offset);
       }
     });
@@ -88,6 +82,9 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
         title: const Text(
           'Home Page',
           style: TextStyle(
@@ -97,6 +94,69 @@ class _HomePageState extends State<HomePage> {
         ),
         backgroundColor: Utils.primaryGreen,
         centerTitle: true,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: const EdgeInsets.all(0),
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                color: Color(0xff009B22),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'RiseUp',
+                        style: TextStyle(
+                            fontSize: 24,
+                            color: Colors.white,
+                            fontFamily: 'assets/fonts/Inter-Bold.ttf',
+                            fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        DateFormat('MMMM').format(currentDate),
+                        style: const TextStyle(
+                            fontSize: 18,
+                            color: Color.fromARGB(255, 192, 230, 198),
+                            fontFamily: 'assets/fonts/Inter-Regular.ttf',
+                            fontWeight: FontWeight.w500),
+                      ),
+                      Text(
+                        DateFormat('yyyy EEEE dd').format(currentDate),
+                        style: const TextStyle(
+                            fontSize: 15,
+                            color: Color.fromARGB(255, 192, 230, 198),
+                            fontFamily: 'assets/fonts/Inter-Regular.ttf',
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '$email',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.white,
+                      fontFamily: 'assets/fonts/Inter-Regular.ttf',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                authController.logout();
+              },
+            ),
+          ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

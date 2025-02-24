@@ -31,8 +31,8 @@ class _HabitAnalyticsPageState extends State<HabitAnalyticsPage> {
 
   /// Fetches completed habit days from Firestore logs collection
   Future<void> fetchCompletedDays() async {
-    String userId = user!.uid; // Replace with actual user ID
-    String habitId = widget.habit.id; // Habit ID from widget
+    String userId = user!.uid;
+    String habitId = widget.habit.id;
 
     CollectionReference logsRef = FirebaseFirestore.instance
         .collection('habits')
@@ -47,10 +47,8 @@ class _HabitAnalyticsPageState extends State<HabitAnalyticsPage> {
       List<DateTime> completedDates = snapshot.docs
           .map((doc) {
             try {
-              return DateFormat('yyyy-MM-dd')
-                  .parse(doc.id); // Convert doc ID to DateTime
+              return DateFormat('yyyy-MM-dd').parse(doc.id);
             } catch (e) {
-              print("Error parsing date: ${doc.id} - $e");
               return null;
             }
           })

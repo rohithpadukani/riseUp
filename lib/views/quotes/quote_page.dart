@@ -18,21 +18,17 @@ class _QuotesPageState extends State<QuotesPage> {
     fetchQuotes();
   }
 
-
   Future<void> fetchQuotes() async {
-    try {
-      final response = await http.get(Uri.parse('https://zenquotes.io/api/quotes'));
+    final response =
+        await http.get(Uri.parse('https://zenquotes.io/api/quotes'));
 
-      if (response.statusCode == 200) {
-        List<dynamic> data = jsonDecode(response.body);
-        setState(() {
-          quotes = data.map((quote) => QuoteModel.fromJson(quote)).toList();
-        });
-      } else {
-        throw Exception("Failed to load quotes");
-      }
-    } catch (e) {
-      print("Error fetching quotes: $e");
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      setState(() {
+        quotes = data.map((quote) => QuoteModel.fromJson(quote)).toList();
+      });
+    } else {
+      throw Exception("Failed to load quotes");
     }
   }
 
@@ -45,9 +41,9 @@ class _QuotesPageState extends State<QuotesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Motivational Quotes")),
+      appBar: AppBar(title: const Text("Motivational Quotes")),
       body: quotes.isEmpty
-          ? Center(child: CircularProgressIndicator()) 
+          ? const Center(child: CircularProgressIndicator())
           : GestureDetector(
               onHorizontalDragEnd: (details) => nextQuote(), // Swipe to change
               child: Center(
@@ -58,13 +54,15 @@ class _QuotesPageState extends State<QuotesPage> {
                     children: [
                       Text(
                         quotes[currentIndex].text,
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       Text(
                         "- ${quotes[currentIndex].author}",
-                        style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
+                        style: const TextStyle(
+                            fontSize: 18, fontStyle: FontStyle.italic),
                       ),
                     ],
                   ),

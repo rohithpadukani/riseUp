@@ -14,8 +14,8 @@ class MainScreen extends StatelessWidget {
   final HomeController homeController = Get.put(HomeController());
 
   final List<Widget> pages = [
-    HomePage(),
-    HabitPage(),
+    const HomePage(),
+    const HabitPage(),
     JournalPage(),
     QuotesPage()
   ];
@@ -44,7 +44,7 @@ class MainScreen extends StatelessWidget {
               leading: const Icon(Icons.home),
               title: const Text('Home'),
               onTap: () {
-                Get.offAll(HomePage());
+                Get.offAll(const HomePage());
               },
             ),
             ListTile(
