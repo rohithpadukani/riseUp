@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:riseup/models/quote_model.dart';
+import 'package:riseup/utils/utils.dart';
 
 class QuotesPage extends StatefulWidget {
   @override
@@ -41,7 +42,19 @@ class _QuotesPageState extends State<QuotesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Motivational Quotes")),
+      appBar: AppBar(
+        backgroundColor: Utils.primaryGreen,
+        title: const Text(
+          'Motivational Quotes',
+          style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              color: Colors.white,
+              
+              fontFamily: 'assets/fonts/Inter-Medium.ttf'),
+        ),
+        centerTitle: true,
+      ),
       body: quotes.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : GestureDetector(
